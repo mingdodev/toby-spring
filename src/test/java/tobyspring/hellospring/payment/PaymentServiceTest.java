@@ -1,42 +1,54 @@
 package tobyspring.hellospring.payment;
 
+import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.beans.factory.BeanFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.graphql.tester.AutoConfigureGraphQlTester;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
-import tobyspring.hellospring.ObjectFactory;
-import tobyspring.hellospring.TestObjectFactory;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 import static java.math.BigDecimal.valueOf;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = TestObjectFactory.class)
-class PaymentServiceSpringTest {
+class PaymentServiceTest {
+    // 인스턴스 변수로 만들거나 BeforeEach 사용
+    // Clock clock = Clock.fixed(Instant.now(), ZoneId.systemDefault());
+    Clock clock;
 
-    @Autowired PaymentService paymentService;
-    @Autowired ExRateProviderStub exRateProviderStub;
-
+    @BeforeEach
+    void beforeEach() {
+        this.clock = Clock.fixed(Instant.now(), ZoneId.systemDefault())
+;    }
     @Test
     void convertedAmount() throws IOException {
-        // exRate: 1000
+        testAmount(valueOf(500), valueOf(5_000), clock);
+        testAmount(valueOf(1_000), valueOf(10_000), clock);
+        testAmount(valueOf(3_000), valueOf(30_000), clock);
+    }
+
+    @Test
+    void validUntil() throws IOException {
+        PaymentService paymentService = new PaymentService(new ExRateProviderStub(valueOf(1_000)), clock);
+
         Payment payment = paymentService.prepare(1L, "USD", BigDecimal.TEN);
 
-        assertThat(payment.getExRate()).isEqualByComparingTo(valueOf(1_000));
-        assertThat(payment.getConvertedAmount()).isEqualByComparingTo(valueOf(10_000));
+        // valid until이 prepare() 30분 뒤로 설정이 됐는가
+        LocalDateTime now = LocalDateTime.now(this.clock);
+        LocalDateTime expectedValidUntil = now.plusMinutes(30);
 
-        // exRate: 500
-        exRateProviderStub.setExRate(valueOf(500));
-        Payment payment2 = paymentService.prepare(1L, "USD", BigDecimal.TEN);
+        Assertions.assertThat(payment.getValidUntil()).isEqualTo(expectedValidUntil);
+    }
 
-        assertThat(payment2.getExRate()).isEqualByComparingTo(valueOf(500));
-        assertThat(payment2.getConvertedAmount()).isEqualByComparingTo(valueOf(5_000));
+    private static void testAmount(BigDecimal exRate, BigDecimal convertedAmount, Clock clock) throws IOException {
+        PaymentService paymentService = new PaymentService(new ExRateProviderStub(exRate), clock);
+
+        Payment payment = paymentService.prepare(1L, "USD", BigDecimal.TEN);
+
+        Assertions.assertThat(payment.getExRate()).isEqualByComparingTo(exRate);
+        Assertions.assertThat(payment.getConvertedAmount()).isEqualByComparingTo(convertedAmount);
     }
 }

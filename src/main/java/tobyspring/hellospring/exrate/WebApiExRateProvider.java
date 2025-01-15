@@ -21,6 +21,7 @@ public class WebApiExRateProvider implements ExRateProvider {
         // 본질적 처리는 아니고 체크 예외를 언체크 예외로 변경`
         String url = "https://open.er-api.com/v6/latest/" + currency;
         URI uri;
+
         try {
             uri = new URI(url);
         } catch (URISyntaxException e) {
@@ -29,22 +30,31 @@ public class WebApiExRateProvider implements ExRateProvider {
 
         String response;
         try {
-            HttpURLConnection connection = (HttpURLConnection) uri.toURL().openConnection();
-
-            try (BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
-                response = br.lines().collect(Collectors.joining());
-            }
-
+            response = executeApi(uri);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-
-        ObjectMapper mapper = new ObjectMapper();
+        
         try {
-            ExRateData data = mapper.readValue(response, ExRateData.class);
-            return data.rates().get("KRW");
+            return parseExRate(response);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private static BigDecimal parseExRate(String response) throws JsonProcessingException {
+        ObjectMapper mapper = new ObjectMapper();
+        ExRateData data = mapper.readValue(response, ExRateData.class);
+        return data.rates().get("KRW");
+    }
+
+    private static String executeApi(URI uri) throws IOException {
+        String response;
+        HttpURLConnection connection = (HttpURLConnection) uri.toURL().openConnection();
+
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
+            response = br.lines().collect(Collectors.joining());
+        }
+        return response;
     }
 }

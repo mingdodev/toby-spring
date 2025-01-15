@@ -25,7 +25,7 @@ class PaymentServiceSpringTest {
     @Autowired ExRateProviderStub exRateProviderStub;
 
     @Test
-    void convertedAmount() throws IOException {
+    void convertedAmount() {
         // exRate: 1000
         Payment payment = paymentService.prepare(1L, "USD", BigDecimal.TEN);
 
@@ -42,13 +42,13 @@ class PaymentServiceSpringTest {
 
     // 스프링에서 자동으로 clock을 주입받으면 고정된 시각이 아니므로 테스트 실행 시점의 시간 기준이 되어 실패함
 //    @Test
-//    void validUntil() throws IOException {
+//    void validUntil() {
 //        Payment payment = paymentService.prepare(1L, "USD", BigDecimal.TEN);
 //
 //        // valid until이 prepare() 30분 뒤로 설정이 됐는가
 //        LocalDateTime now = LocalDateTime.now(this.clock);
 //        LocalDateTime expectedValidUntil = now.plusMinutes(30);
 //
-//       ㄴ Assertions.assertThat(payment.getValidUntil()).isEqualTo(expectedValidUntil);
+//       Assertions.assertThat(payment.getValidUntil()).isEqualTo(expectedValidUntil);
 //    }
 }

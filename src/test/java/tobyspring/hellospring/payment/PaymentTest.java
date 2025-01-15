@@ -34,6 +34,6 @@ public class PaymentTest {
                 1L, "USD", BigDecimal.TEN, valueOf(1_000), LocalDateTime.now(clock)
         );
         assertThat(payment.isValid(clock)).isTrue();
-        assertThat(payment.isValid(clock.offset(clock, Duration.of(30, ChronoUnit.MINUTES)))).isFalse();
+        assertThat(payment.isValid(Clock.offset(clock, Duration.of(30, ChronoUnit.MINUTES)))).isFalse();
     }
 }

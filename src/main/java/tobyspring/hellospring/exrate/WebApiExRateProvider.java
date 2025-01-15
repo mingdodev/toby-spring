@@ -1,6 +1,8 @@
 package tobyspring.hellospring.exrate;
 
 import api.ApiExecutor;
+import api.ErApiExRateExtractor;
+import api.ExRateExtractor;
 import api.SimpleApiExecutor;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -18,10 +20,10 @@ public class WebApiExRateProvider implements ExRateProvider {
         // 본질적 처리는 아니고 체크 예외를 언체크 예외로 변경`
         String url = "https://open.er-api.com/v6/latest/" + currency;
 
-        return runApiForExRate(url, new SimpleApiExecutor()); // callback
+        return runApiForExRate(url, new SimpleApiExecutor(), new ErApiExRateExtractor()); // callback
     }
 
-    private static BigDecimal runApiForExRate(String url, ApiExecutor apiExecutor) {
+    private static BigDecimal runApiForExRate(String url, ApiExecutor apiExecutor, ExRateExtractor exRateExtractor) {
         URI uri;
 
         try {
@@ -38,17 +40,9 @@ public class WebApiExRateProvider implements ExRateProvider {
         }
 
         try {
-            return extractExRate(response);
+            return exRateExtractor.extract(response);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
     }
-
-    private static BigDecimal extractExRate(String response) throws JsonProcessingException {
-        ObjectMapper mapper = new ObjectMapper();
-        ExRateData data = mapper.readValue(response, ExRateData.class);
-        return data.rates().get("KRW");
-    }
-
-
 }

@@ -1,5 +1,6 @@
 package tobyspring.hellospring.exrate;
 
+import api.SimpleApiExecutor;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import tobyspring.hellospring.payment.ExRateProvider;
@@ -11,7 +12,6 @@ import java.math.BigDecimal;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.stream.Collectors;
 
 public class WebApiExRateProvider implements ExRateProvider {
@@ -20,6 +20,11 @@ public class WebApiExRateProvider implements ExRateProvider {
         // 여기서는 확실히 네트워크를 통해 API를 사용하므로 네트워크 연결 실패 등에 대한 예외 처리 필요 (체크 예외)
         // 본질적 처리는 아니고 체크 예외를 언체크 예외로 변경`
         String url = "https://open.er-api.com/v6/latest/" + currency;
+
+        return runApiForExRate(url);
+    }
+
+    private static BigDecimal runApiForExRate(String url) {
         URI uri;
 
         try {
@@ -30,31 +35,23 @@ public class WebApiExRateProvider implements ExRateProvider {
 
         String response;
         try {
-            response = executeApi(uri);
+            response = new SimpleApiExecutor().execute(uri);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        
+
         try {
-            return parseExRate(response);
+            return extractExRate(response);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
     }
 
-    private static BigDecimal parseExRate(String response) throws JsonProcessingException {
+    private static BigDecimal extractExRate(String response) throws JsonProcessingException {
         ObjectMapper mapper = new ObjectMapper();
         ExRateData data = mapper.readValue(response, ExRateData.class);
         return data.rates().get("KRW");
     }
 
-    private static String executeApi(URI uri) throws IOException {
-        String response;
-        HttpURLConnection connection = (HttpURLConnection) uri.toURL().openConnection();
 
-        try (BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
-            response = br.lines().collect(Collectors.joining());
-        }
-        return response;
-    }
 }

@@ -1,5 +1,8 @@
 package tobyspring.hellospring;
 
+import api.ApiTemplate;
+import api.ErApiExRateExtractor;
+import api.SimpleApiExecutor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import tobyspring.hellospring.exrate.CachedExRateProvider;
@@ -18,7 +21,10 @@ public class PaymentConfig {
     public ExRateProvider cachedExRateProvider() { return new CachedExRateProvider(exRateProvider()); }
 
     @Bean
-    public ExRateProvider exRateProvider() { return new WebApiExRateProvider(); }
+    public ApiTemplate apiTemplate() { return new ApiTemplate(new SimpleApiExecutor(), new ErApiExRateExtractor()); }
+
+    @Bean
+    public ExRateProvider exRateProvider() { return new WebApiExRateProvider(apiTemplate()); }
 
     @Bean
     public Clock clock() { return Clock.systemDefaultZone(); }

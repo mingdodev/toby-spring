@@ -23,4 +23,11 @@ public class OrderServiceSpringTest {
 
         Assertions.assertThat(order.getId()).isGreaterThan(0);
     }
+
+    @Test
+    void getOrder() {
+        var order = orderService.create("0200", BigDecimal.ONE);
+
+        Assertions.assertThat(order.getNo()).isEqualTo("0200");
+    }
 }

@@ -27,7 +27,7 @@ public class OrderServiceSpringTest {
     DataSource dataSource;
 
     @Test
-    void createOrderOrder() {
+    void createOrder() {
         var order = orderService.createOrder("0100", BigDecimal.ONE);
 
         Assertions.assertThat(order.getId()).isGreaterThan(0);
